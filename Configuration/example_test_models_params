@@ -1,0 +1,6 @@
+{
+"ascad_database" : "ATMEGA_AES_v1/ATM_AES_v1_fixed_key/ASCAD_data/ASCAD_databases/ASCAD_fixed.h5",
+"model_file": "ATMEGA_AES_v1/james_trained_20220324.h5",
+"num_traces": 1000,
+"save_file": "output.png"
+}

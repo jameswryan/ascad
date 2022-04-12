@@ -22,19 +22,7 @@ def check_file_exists(file_path):
 		sys.exit(-1)
 	return
 
-#### MLP Best model (6 layers of 200 units)
-def mlp_best(node=200,layer_nb=6,input_dim=1400):
-	model = Sequential()
-	model.add(Dense(node, input_dim=input_dim, activation='relu'))
-	for i in range(layer_nb-2):
-		model.add(Dense(node, activation='relu'))
-	model.add(Dense(256, activation='softmax'))
-	optimizer = RMSprop(lr=0.00001)
-	model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
-	return model
-
-### CNN Best model
-def cnn_best(classes=256,input_dim=700):
+def vgg16(classes=256,input_dim=700):
 	# From VGG16 design
 	input_shape = (input_dim,1)
 	img_input = Input(shape=input_shape)
@@ -63,147 +51,6 @@ def cnn_best(classes=256,input_dim=700):
 	# Create model.
 	model = Model(inputs, x, name='cnn_best')
 	optimizer = RMSprop(lr=0.00001)
-	model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
-	return model
-
-### CNN Best model
-def cnn_best2(classes=256,input_dim=1400):
-	# From VGG16 design
-	input_shape = (input_dim,1)
-	img_input = Input(shape=input_shape)
-	# Block 1
-	x = Conv1D(64, 11, strides=2, activation='relu', padding='same', name='block1_conv1')(img_input)
-	x = AveragePooling1D(2, strides=2, name='block1_pool')(x)
-	# Block 2
-	x = Conv1D(128, 11, activation='relu', padding='same', name='block2_conv1')(x)
-	x = AveragePooling1D(2, strides=2, name='block2_pool')(x)
-	# Block 3
-	x = Conv1D(256, 11, activation='relu', padding='same', name='block3_conv1')(x)
-	x = AveragePooling1D(2, strides=2, name='block3_pool')(x)
-	# Block 4
-	x = Conv1D(512, 11, activation='relu', padding='same', name='block4_conv1')(x)
-	x = AveragePooling1D(2, strides=2, name='block4_pool')(x)
-	# Block 5
-	x = Conv1D(512, 11, activation='relu', padding='same', name='block5_conv1')(x)
-	x = AveragePooling1D(2, strides=2, name='block5_pool')(x)
-	# Classification block
-	x = Flatten(name='flatten')(x)
-	x = Dense(4096, activation='relu', name='fc1')(x)
-	x = Dense(4096, activation='relu', name='fc2')(x)
-	x = Dense(classes, activation='softmax', name='predictions')(x)
-
-	inputs = img_input
-	# Create model.
-	model = Model(inputs, x, name='cnn_best2')
-	optimizer = RMSprop(lr=0.00001)
-	model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
-	return model
-
-
-### Resnet layer sub-function of ResNetSCA
-def resnet_layer(inputs,
-				 num_filters=16,
-				 kernel_size=11,
-				 strides=1,
-				 activation='relu',
-				 batch_normalization=True,
-				 conv_first=True):
-	conv = Conv1D(num_filters,
-				  kernel_size=kernel_size,
-				  strides=strides,
-				  padding='same',
-				  kernel_initializer='he_normal')
-
-	x = inputs
-	if conv_first:
-		x = conv(x)
-		if batch_normalization:
-			x = BatchNormalization()(x)
-		if activation is not None:
-			x = Activation(activation)(x)
-	else:
-		if batch_normalization:
-			x = BatchNormalization()(x)
-		if activation is not None:
-			x = Activation(activation)(x)
-		x = conv(x)
-	return x
-
-### Branch of ResNetSCA that predict the multiplicative mask alpha
-def alpha_branch(x):
-	x = Dense(1024, activation='relu', name='fc1_alpha')(x)
-	x = BatchNormalization()(x)
-	x = Dense(256, activation="softmax", name='alpha_output')(x)
-	return x
-
-### Branch of ResNetSCA that predict the additive mask beta
-def beta_branch(x):
-	x = Dense(1024, activation='relu', name='fc1_beta')(x)
-	x = BatchNormalization()(x)
-	x = Dense(256, activation="softmax", name='beta_output')(x)
-	return x
-
-### Branch of ResNetSCA that predict the masked sbox output
-def sbox_branch(x,i):
-	x = Dense(1024, activation='relu', name='fc1_sbox_'+str(i))(x)
-	x = BatchNormalization()(x)
-	x = Dense(256, activation="softmax", name='sbox_'+str(i)+'_output')(x)
-	return x
-
-### Branch of ResNetSCA that predict the pemutation indices
-def permind_branch(x,i):
-	x = Dense(1024, activation='relu', name='fc1_pemind_'+str(i))(x)
-	x = BatchNormalization()(x)
-	x = Dense(16, activation="softmax", name='permind_'+str(i)+'_output')(x)
-	return x
-
-### Generic function that produce the ResNetSCA architecture.
-### If without_permind option is set to 1, the ResNetSCA model is built without permindices branch
-def resnet_v1(input_shape, depth, num_classes=256, without_permind=0):
-	if (depth - 1) % 18 != 0:
-		raise ValueError('depth should be 18n+1 (eg 19, 37, 55 ...)')
-	# Start model definition.
-	num_filters = 16
-	num_res_blocks = int((depth - 1) / 18)
-	inputs = Input(shape=input_shape)
-	x = resnet_layer(inputs=inputs)
-	# Instantiate the stack of residual units
-	for stack in range(9):
-		for res_block in range(num_res_blocks):
-			strides = 1
-			if stack > 0 and res_block == 0:
-				strides = 2
-			y = resnet_layer(inputs=x,
-							 num_filters=num_filters,
-							 strides=strides)
-			y = resnet_layer(inputs=y,
-							 num_filters=num_filters,
-							 activation=None)
-			if stack > 0 and res_block == 0:
-				x = resnet_layer(inputs=x,
-								 num_filters=num_filters,
-								 kernel_size=1,
-								 strides=strides,
-								 activation=None,
-								 batch_normalization=False)
-			x = add([x, y])
-			x = Activation('relu')(x)
-		if (num_filters<256):
-			num_filters *= 2
-	x = AveragePooling1D(pool_size=4)(x)
-	x = Flatten()(x)
-	x_alpha = alpha_branch(x)
-	x_beta = beta_branch(x)
-	x_sbox_l = []
-	x_permind_l = []
-	for i in range(16):
-		x_sbox_l.append(sbox_branch(x,i))
-		x_permind_l.append(permind_branch(x,i))
-	if without_permind!=1:
-	  model = Model(inputs, [x_alpha, x_beta] + x_sbox_l + x_permind_l, name='extract_resnet')
-	else:
-	  model = Model(inputs, [x_alpha, x_beta] + x_sbox_l, name='extract_resnet_without_permind')
-	optimizer = Adam()
 	model.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['accuracy'])
 	return model
 
@@ -347,19 +194,13 @@ def read_parameters_from_file(param_filename):
 
 if __name__ == "__main__":
 	if len(sys.argv)!=2:
-		#default parameters values
+		# Dataset to train on
 		ascad_database = "ATMEGA_AES_v1/ATM_AES_v1_fixed_key/ASCAD_data/ASCAD_databases/ASCAD.h5"
-		#MLP training
-		network_type = "mlp"
+		# What type of network we want to train
+		network_type = "vgg16"
+		# Where to save trained model
 		training_model = "ATMEGA_AES_v1/ATM_AES_v1_fixed_key/ASCAD_data/ASCAD_trained_models/my_mlp_best_desync0_epochs75_batchsize200.h5"
 
-		#CNN training
-		#network_type = "cnn"
-		#training_model = "ATMEGA_AES_v1/ATM_AES_v1_fixed_key/ASCAD_data/ASCAD_trained_models/my_cnn_best_desync0_epochs75_batchsize200.h5"
-
-		#CNN training
-		#network_type = "cnn2"
-		#training_model = "ATMEGA_AES_v1/ATM_AES_v1_fixed_key/ASCAD_data/ASCAD_trained_models/my_cnn_best_desync0_epochs75_batchsize200.h5"
 		validation_split = 0
 		multilabel = 0
 		train_len = 0
@@ -374,22 +215,12 @@ if __name__ == "__main__":
 	(X_profiling, Y_profiling), (X_attack, Y_attack) = load_ascad(ascad_database)
 
 	#get network type
-	if(network_type=="mlp"):
-		best_model = mlp_best(input_dim=len(X_profiling[0]))
-	elif(network_type=="cnn"):
-		best_model = cnn_best(input_dim=len(X_profiling[0]))
-	elif(network_type=="cnn2"):
-		best_model = cnn_best2(input_dim=len(X_profiling[0]))
-	elif(network_type=="multi_test"):
-		best_model = multi_test(input_dim=len(X_profiling[0]))
-	elif(network_type=="multi_resnet"):
-		best_model = resnet_v1((15000,1), 19)
-	elif(network_type=="multi_resnet_without_permind"):
-		best_model = resnet_v1((15000,1), 19, without_permind=1)
+	if(network_type=="vgg16"):
+		best_model = vgg16(input_dim=len(X_profiling[0]))
 	else: #display an error and abort
 		print("Error: no topology found for network '%s' ..." % network_type)
 		sys.exit(-1);
-	#  print best_model.summary()
+	print(best_model.summary())
 
 	### training
 	if (train_len == 0):
