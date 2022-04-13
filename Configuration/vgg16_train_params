@@ -1,6 +1,6 @@
 {
-"ascad_database" : "ATMEGA_AES_v1/ATM_AES_v1_fixed_key/ASCAD_data/ASCAD_databases/ASCAD_fixed.h5",
-"training_model": "ATMEGA_AES_v1/vgg16.h5",
+"ascad_database" : "Database/ASCAD_fixed.h5",
+"training_model": "Models/vgg16.h5",
 "network_type": "vgg16",
 "epochs": 200,
 "batch_size": 100,

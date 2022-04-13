@@ -1,0 +1,6 @@
+{
+"ascad_database" : "Database/ASCAD_fixed.h5",
+"model_file": "Model/vgg16.h5",
+"num_traces": 1000,
+"save_file": "output.png"
+}
