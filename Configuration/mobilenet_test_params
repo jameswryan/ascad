@@ -1,0 +1,6 @@
+{
+"ascad_database" : "Database/ASCAD_fixed.h5",
+"model_file": "Models/mobilenet.h5",
+"num_traces": 1000,
+"save_file": "mobilenet_byt2.png"
+}

@@ -1,7 +1,7 @@
 {
 "ascad_database" : "Database/ASCAD_fixed.h5",
-"training_model": "Models/vgg16.h5",
-"network_type": "vgg16",
+"training_model": "Models/mobilenet.h5",
+"network_type": "mobilenet",
 "epochs": 500,
 "batch_size": 100,
 }
