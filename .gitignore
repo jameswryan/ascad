@@ -1,4 +1,6 @@
 .github
 Database
-*.h5
-*.png
+Models
+Images
+__pycache__
+*.sif
