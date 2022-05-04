@@ -1,6 +1,6 @@
 {
 "ascad_database" : "Database/ASCAD_fixed.h5",
 "model_file": "Models/vgg16.h5",
-"num_traces": 1000,
-"save_file": "vgg16_byt2.png"
+"num_traces": 10000,
+"save_file": "Images/vgg16_rank.png"
 }
