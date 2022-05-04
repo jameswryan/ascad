@@ -1,11 +1,7 @@
 import os
 import matplotlib as mpl
 # take care of case where no graphical display is available (by example when run on a dedicated server)
-if os.environ.get('DISPLAY','') == '':
-	print('no display found. Using non-interactive Agg backend')
-	mpl.use('Agg')
-else:
-	mpl.use('TkAgg')
+mpl.use('Agg')
 import os.path
 import sys
 import h5py
@@ -303,7 +299,6 @@ def check_model(model_file, ascad_database, num_traces=2000, target_byte=2, mult
 			plt.savefig(save_file)
 		else:
 			plt.show(block=False)
-
 	else:
 		predictions_sbox_i = predictions
 	  # We test the rank over traces of the Attack dataset, with a step of 10 traces
@@ -359,14 +354,11 @@ if __name__ == "__main__":
 		simulated_key=0
 	else:
 		#get parameters from user input
-		model_file, ascad_database, num_traces, target_byte, multilabel, simulated_key, save_file  = read_parameters_from_file(sys.argv[1])
+		model_file, ascad_database, num_traces, target_byte, multilabel, simulated_key, save_file = read_parameters_from_file(sys.argv[1])
 
 	#check model
 	check_model(model_file, ascad_database, num_traces, target_byte, multilabel, simulated_key, save_file)
 
+	exit()
 
-	try:
-		input("Press enter to exit ...")
-	except SyntaxError:
-		pass
 
